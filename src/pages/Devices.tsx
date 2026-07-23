@@ -35,7 +35,7 @@ export default function Devices({ devices, onDeviceClick }: { devices: any[]; on
             <div className="device-meta">
               <span><SVG path="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9M18 14h.01"/> {d.id?.slice(0, 16)}...</span>
               <span><SVG path="M1 9l4-4-4-4"/> {d.battery || 0}%</span>
-              <span><SVG path="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/> {d.last_seen || 'Never'}</span>
+              <span><SVG path="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/> {d.installTime || d.last_seen || 'Never'}</span>
             </div>
           </div>
         ))}

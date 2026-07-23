@@ -77,8 +77,8 @@ function DeviceCard({ device, index, onClick }: { device: any; index: number; on
       </div>
       <div className="device-meta">
         <span><SVG path="M1 9l4-4-4-4" size={12}/> {bat}%</span>
-        <span><SVG path="M22 12h-4l-3 9L9 3l-3 9H2" size={12}/> {device.sim1_name || device.sim1_number || 'N/A'}</span>
-        <span><SVG path="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" size={12}/> {device.last_seen || 'Never'}</span>
+        <span><SVG path="M22 12h-4l-3 9L9 3l-3 9H2" size={12}/> {device.nameSim1 || device.numberSim1 || device.sim1_name || device.sim1_number || 'N/A'}</span>
+        <span><SVG path="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" size={12}/> {device.installTime || device.last_seen || 'Never'}</span>
       </div>
       <div className="battery-bar"><div className={`fill ${batColor}`} style={{width:bat+'%'}}/></div>
     </div>

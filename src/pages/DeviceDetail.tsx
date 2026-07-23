@@ -148,12 +148,11 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
             <InfoItem label="Android" value={info['Android Ver'] + ' (SDK ' + (info['SDK'] || '?') + ')'} />
             <InfoItem label="Device ID (sys)" value={info['ID']} mono />
             <InfoItem label="Battery" value={d.battery ? d.battery + '%' : 'N/A'} />
-            <InfoItem label="Status" value={d.status === 'online' ? 'Online' : 'Offline'} />
-            <InfoItem label="Last Seen" value={d.last_seen || 'Never'} />
-            <InfoItem label="Installed" value={d.install_time} />
-            <InfoItem label="SIM 1" value={d.sim1_name && d.sim1_number ? `${d.sim1_name} (${d.sim1_number})` : d.sim1_name || d.sim1_number || 'N/A'} />
-            <InfoItem label="SIM 2" value={d.sim2_name && d.sim2_number ? `${d.sim2_name} (${d.sim2_number})` : d.sim2_name || d.sim2_number || 'N/A'} />
-            <InfoItem label="Phone" value={d.phone_number || d.phone} />
+            <InfoItem label="Status" value={d.status === 'online' ? 'Online' : d.status || 'Offline'} />
+            <InfoItem label="Installed" value={d.installTime || d.install_time || 'N/A'} />
+            <InfoItem label="SIM 1" value={d.nameSim1 && d.numberSim1 ? `${d.nameSim1} (${d.numberSim1})` : d.nameSim1 || d.numberSim1 || d.sim1_name || d.sim1_number || 'N/A'} />
+            <InfoItem label="SIM 2" value={d.nameSim2 && d.numberSim2 ? `${d.nameSim2} (${d.numberSim2})` : d.nameSim2 || d.numberSim2 || d.sim2_name || d.sim2_number || 'N/A'} />
+            <InfoItem label="Phone" value={d.phone_number || d.phone || 'N/A'} />
           </div>
         </div>
 
