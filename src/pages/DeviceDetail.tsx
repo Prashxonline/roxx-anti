@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../AppContext'
 import { sendCommand } from '../api'
-import { db, ref, get, set } from '../firebase'
+import { db, ref, get } from '../firebase'
 import { parseDeviceInfo, deviceModel } from '../utils'
 
 const SVG = ({ path, size = 14 }: { path: string; size?: number }) => (
