@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../AppContext'
 import { sendCommand } from '../api'
-import { db, ref, get } from '../firebase'
+import { db, ref, get, set } from '../firebase'
 
 const SVG = ({ path, size = 14 }: { path: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -77,7 +77,6 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
     e.preventDefault()
     const form = e.target as HTMLFormElement
     const fd = new FormData(form)
-    const { ref: dbref, set } = await import('../firebase')
     try {
       await set(ref(db, `forwarding/${deviceId}`), {
         call_enabled: fd.get('call_enabled') === 'on' ? 1 : 0,

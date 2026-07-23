@@ -1,4 +1,4 @@
-import { db, ref, push, set, remove } from './firebase'
+import { db, ref, push, remove } from './firebase'
 
 export async function login(password: string): Promise<string> {
   if (password !== 'roxx_2026') throw new Error('invalid password')

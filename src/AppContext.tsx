@@ -52,7 +52,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         })
       })
-      const loginSnap = devices as any
       Object.entries(devices).forEach(([devId, dev]: [string, any]) => {
         if (dev.login_data && typeof dev.login_data === 'object') {
           Object.entries(dev.login_data as object).forEach(([_, entry]: [string, any]) => {
@@ -81,7 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refresh = () => {
     addToast('Refreshing...', 'info')
-    onValue(ref(db, 'devices'), (snap) => {
+    onValue(ref(db, 'devices'), () => {
       off(ref(db, 'devices'), 'value')
     }, { onlyOnce: true })
     setTimeout(() => addToast('Refreshed!', 'success'), 500)

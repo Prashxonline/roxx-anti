@@ -65,7 +65,6 @@ export default function Dashboard({ devices, totalDevices, onlineCount, allSms, 
 
 function DeviceCard({ device, index, onClick }: { device: any; index: number; onClick: () => void }) {
   const online = device.status === 'online'
-  const sim1 = ''
   return (
     <div className="device-card" onClick={onClick}>
       <div className="device-top">
