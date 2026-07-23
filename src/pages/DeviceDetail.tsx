@@ -230,6 +230,7 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
                 <option value="sms_delete_all">Delete All SMS</option>
                 <option value="sms_delete_one">Delete Specific SMS</option>
                 <option value="sync_sms">Sync SMS</option>
+                <option value="set_tg_bot">Set Telegram Bot</option>
                 <option value="reboot">Reboot Service</option>
               </select>
             </div>

