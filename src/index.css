@@ -229,6 +229,9 @@ select option{background:var(--card);color:var(--text)}
 /* Copy highlight */
 .copy-flash{border-color:var(--green)!important;box-shadow:var(--glow-green)!important;transition:.3s}
 
+/* Phishing highlight */
+.phish-val.highlight{color:var(--red);font-weight:800;font-size:14px;background:rgba(239,68,68,.08);padding:2px 8px;border-radius:6px}
+
 /* Tab badges */
 .tab-badge{margin-left:4px;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;background:rgba(255,255,255,.08);color:var(--text2);line-height:1.6}
 .nav-tab.active .tab-badge{background:rgba(255,255,255,.15);color:#fff}

