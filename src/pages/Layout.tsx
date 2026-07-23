@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../AppContext'
 import Dashboard from './Dashboard'
@@ -22,21 +22,36 @@ const SVG = ({ path, size = 14 }: { path: string; size?: number }) => (
   </svg>
 )
 
+function timeAgo(ts: string | number): string {
+  if (!ts) return ''
+  const sec = Math.floor((Date.now() - new Date(ts).getTime()) / 1000)
+  if (sec < 5) return 'just now'
+  if (sec < 60) return sec + 's ago'
+  if (sec < 3600) return Math.floor(sec / 60) + 'm ago'
+  if (sec < 86400) return Math.floor(sec / 3600) + 'h ago'
+  return Math.floor(sec / 86400) + 'd ago'
+}
+
 export default function Layout() {
   const navigate = useNavigate()
   const token = localStorage.getItem('admin_token')
   const { devices, allSms, allPhishing, connected, lastUpdate, refresh } = useApp()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [detailDeviceId, setDetailDeviceId] = useState<string | null>(null)
-  const [connText, setConnText] = useState('Offline')
+  const [bttVisible, setBttVisible] = useState(false)
+  const mainRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!token) navigate('/login')
   }, [token, navigate])
 
   useEffect(() => {
-    setConnText(connected ? 'Online' : 'Offline')
-  }, [connected])
+    const el = mainRef.current
+    if (!el) return
+    const onScroll = () => setBttVisible(el.scrollTop > 300)
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   if (!token) return null
 
@@ -44,15 +59,20 @@ export default function Layout() {
   const onlineCount = Object.values(devices).filter((d: any) => d.status === 'online').length
   const deviceArray = Object.entries(devices).map(([id, d]) => ({ id, ...(d as any) }))
 
+  const tabCounts: Record<string, number> = {
+    sms: allSms.length,
+    phishing: allPhishing.length,
+  }
+
   return (
-    <div>
+    <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh' }}>
       {/* Header */}
       <div className="header">
         <h1>ROXX-ANTI Panel</h1>
         <div className="header-right">
           <div className="status-pill">
             <div className={`status-dot ${connected ? '' : 'off'}`} />
-            <span>{connText}</span>
+            <span>{connected ? 'Online' : 'Offline'}</span>
           </div>
           <button className="btn-icon" onClick={refresh}><SVG path="M23 4v6h-6M1 20v-6h6" size={16}/></button>
         </div>
@@ -61,14 +81,15 @@ export default function Layout() {
       {/* Nav Tabs */}
       <div className="nav">
         {tabs.map(t => (
-          <button key={t.key} className={`nav-tab ${activeTab === t.key ? 'active' : ''}`} onClick={() => setActiveTab(t.key)}>
+          <button key={t.key} className={`nav-tab ${activeTab === t.key ? 'active' : ''}`} onClick={() => { setActiveTab(t.key); mainRef.current?.scrollTo(0,0) }}>
             <SVG path={t.icon} /> {t.label}
+            {tabCounts[t.key] > 0 && <span className="tab-badge">{tabCounts[t.key] > 99 ? '99+' : tabCounts[t.key]}</span>}
           </button>
         ))}
       </div>
 
       {/* Main Content */}
-      <div className="main">
+      <div ref={mainRef} className="main" style={{flex:1,overflowY:'auto'}}>
         <div className={`section ${activeTab === 'dashboard' ? 'active' : ''}`}>
           <Dashboard devices={deviceArray} totalDevices={totalDevices} onlineCount={onlineCount}
             allSms={allSms} allPhishing={allPhishing} lastUpdate={lastUpdate}
@@ -86,7 +107,19 @@ export default function Layout() {
         <div className={`section ${activeTab === 'commands' ? 'active' : ''}`}>
           <CommandsPage devices={deviceArray} />
         </div>
+
+        {/* Footer */}
+        <div className="footer">
+          <span>ROXX-ANTI v2.0 &bull; Firebase Realtime</span>
+          <span>{Object.keys(devices).length} devices &middot; {allSms.length} SMS &middot; {allPhishing.length} phishing</span>
+          <span>Last updated {timeAgo(lastUpdate) || 'never'}</span>
+        </div>
       </div>
+
+      {/* Back to Top */}
+      <button className={`btt ${bttVisible ? 'visible' : ''}`} onClick={() => mainRef.current?.scrollTo({top:0,behavior:'smooth'})}>
+        <SVG path="M12 19V5M5 12l7-7 7 7" size={18}/>
+      </button>
 
       {/* Detail Panel */}
       <DeviceDetail deviceId={detailDeviceId} onClose={() => setDetailDeviceId(null)} />
