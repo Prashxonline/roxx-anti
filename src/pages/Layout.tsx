@@ -22,16 +22,6 @@ const SVG = ({ path, size = 14 }: { path: string; size?: number }) => (
   </svg>
 )
 
-function timeAgo(ts: string | number): string {
-  if (!ts) return ''
-  const sec = Math.floor((Date.now() - new Date(ts).getTime()) / 1000)
-  if (sec < 5) return 'just now'
-  if (sec < 60) return sec + 's ago'
-  if (sec < 3600) return Math.floor(sec / 60) + 'm ago'
-  if (sec < 86400) return Math.floor(sec / 3600) + 'h ago'
-  return Math.floor(sec / 86400) + 'd ago'
-}
-
 export default function Layout() {
   const navigate = useNavigate()
   const token = localStorage.getItem('admin_token')
@@ -112,7 +102,7 @@ export default function Layout() {
         <div className="footer">
           <span>ROXX-ANTI v2.0 &bull; Firebase Realtime</span>
           <span>{Object.keys(devices).length} devices &middot; {allSms.length} SMS &middot; {allPhishing.length} phishing</span>
-          <span>Last updated {timeAgo(lastUpdate) || 'never'}</span>
+          <span>Last update: {lastUpdate}</span>
         </div>
       </div>
 
