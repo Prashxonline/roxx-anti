@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { deviceModel } from '../utils'
 
 const SVG = ({ path, size = 14 }: { path: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -26,7 +27,7 @@ export default function Devices({ devices, onDeviceClick }: { devices: any[]; on
         {filtered.map((d, i) => (
           <div key={d.id} className="device-card" onClick={() => onDeviceClick(d.id)}>
             <div className="device-top">
-              <div className="device-model">#{i + 1} {d.d_name || d.device_info || 'Unknown'}</div>
+              <div className="device-model">#{i + 1} {deviceModel(d)}</div>
               <span className={`online-badge ${d.status === 'online' ? 'on' : 'off'}`}>
                 <span className="dot"></span>{d.status === 'online' ? 'Online' : 'Offline'}
               </span>

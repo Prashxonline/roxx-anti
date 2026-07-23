@@ -1,3 +1,5 @@
+import { deviceModel } from '../utils'
+
 interface Props {
   devices: any[]
   totalDevices: number
@@ -70,7 +72,7 @@ function DeviceCard({ device, index, onClick }: { device: any; index: number; on
   return (
     <div className="device-card" onClick={onClick}>
       <div className="device-top">
-        <div className="device-model">#{index + 1} {device.d_name || device.device_info || 'Unknown Device'}</div>
+        <div className="device-model">#{index + 1} {deviceModel(device)}</div>
         <span className={`online-badge ${online ? 'on' : 'off'}`}><span className="dot"></span>{online ? 'Online' : 'Offline'}</span>
       </div>
       <div className="device-meta">
